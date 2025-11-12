@@ -30,6 +30,39 @@ struct ScanFolderOptions {
     include_subfolders: bool,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct AppConfig {
+    compression_level: i32,
+    overwrite: bool,
+    backup: bool,
+    ultra_brute: bool,
+    include_subfolders: bool,
+    force_compress: bool,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        Self {
+            compression_level: 9,
+            overwrite: true,
+            backup: false,
+            ultra_brute: false,
+            include_subfolders: false,
+            force_compress: false,
+        }
+    }
+}
+
+// 获取配置文件路径
+fn get_config_path() -> Option<PathBuf> {
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            return Some(exe_dir.join("upx_gui_config.json"));
+        }
+    }
+    None
+}
+
 // 获取UPX可执行文件路径
 fn get_upx_path() -> Option<PathBuf> {
     // 打包后的位置
@@ -41,13 +74,13 @@ fn get_upx_path() -> Option<PathBuf> {
             }
         }
     }
-    
+
     // 开发环境
     let dev_upx = PathBuf::from("../upx/upx.exe");
     if dev_upx.exists() {
         return Some(dev_upx);
     }
-    
+
     None
 }
 
@@ -304,14 +337,14 @@ async fn refresh_icon_cache() -> Result<(), String> {
                 .args(&["/f", "/im", "explorer.exe"])
                 .creation_flags(CREATE_NO_WINDOW)
                 .output();
-            
+
             std::thread::sleep(std::time::Duration::from_millis(500));
-            
+
             // 2. 删除图标缓存
             if let Ok(userprofile) = std::env::var("USERPROFILE") {
                 let cache_db = format!("{}\\AppData\\Local\\IconCache.db", userprofile);
                 let _ = fs::remove_file(&cache_db);
-                
+
                 // 删除缩略图缓存
                 let explorer_path = format!("{}\\AppData\\Local\\Microsoft\\Windows\\Explorer", userprofile);
                 if let Ok(entries) = fs::read_dir(&explorer_path) {
@@ -325,24 +358,57 @@ async fn refresh_icon_cache() -> Result<(), String> {
                     }
                 }
             }
-            
+
             std::thread::sleep(std::time::Duration::from_millis(500));
-            
+
             // 3. 重启 Explorer
             let _ = Command::new("explorer.exe")
                 .creation_flags(CREATE_NO_WINDOW)
                 .spawn();
         }
     });
-    
+
     Ok(())
+}
+
+// 保存配置
+#[tauri::command]
+fn save_config(config: AppConfig) -> Result<(), String> {
+    let config_path = get_config_path().ok_or("无法获取配置文件路径")?;
+    let json = serde_json::to_string_pretty(&config)
+        .map_err(|e| format!("序列化配置失败: {}", e))?;
+    fs::write(&config_path, json)
+        .map_err(|e| format!("保存配置文件失败: {}", e))
+}
+
+// 加载配置
+#[tauri::command]
+fn load_config() -> Result<AppConfig, String> {
+    let config_path = get_config_path().ok_or("无法获取配置文件路径")?;
+
+    if !config_path.exists() {
+        return Ok(AppConfig::default());
+    }
+
+    let json = fs::read_to_string(&config_path)
+        .map_err(|e| format!("读取配置文件失败: {}", e))?;
+
+    serde_json::from_str(&json)
+        .map_err(|e| format!("解析配置文件失败: {}", e))
 }
 
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
-        .invoke_handler(tauri::generate_handler![process_upx, scan_folder, get_upx_version, refresh_icon_cache])
+        .invoke_handler(tauri::generate_handler![
+            process_upx,
+            scan_folder,
+            get_upx_version,
+            refresh_icon_cache,
+            save_config,
+            load_config
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

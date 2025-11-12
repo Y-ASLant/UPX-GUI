@@ -37,7 +37,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initTitleClick();
     preventRefresh();
     await setupDragAndDrop();
-    
+
+    // 加载保存的配置
+    await loadSavedConfig();
+
     // 获取并显示UPX版本
     try {
         const version = await invoke('get_upx_version');
@@ -50,12 +53,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         addLog('UPX GUI 已就绪 - 请选择操作', 'info');
     }
-    
+
     // 页面加载完成后显示窗口，避免白屏
     setTimeout(async () => {
         await appWindow.show();
     }, 100);
-    
+
     // 监听窗口大小变化，更新按钮位置缓存
     window.addEventListener('resize', () => {
         cachedButtonRects = null;  // 清除缓存，下次使用时重新计算
@@ -127,14 +130,16 @@ function initOperationButtons() {
     });
 
     // 关闭设置按钮
-    closeSettingsBtn.addEventListener('click', () => {
+    closeSettingsBtn.addEventListener('click', async () => {
+        await saveCurrentConfig();
         hideSettingsModal();
         addLog('设置已保存', 'success');
     });
 
     // 点击背景关闭弹窗
-    settingsModal.addEventListener('click', (e) => {
+    settingsModal.addEventListener('click', async (e) => {
         if (e.target === settingsModal) {
+            await saveCurrentConfig();
             hideSettingsModal();
         }
     });
@@ -186,40 +191,31 @@ function initOperationButtons() {
     });
 }
 
+// 级别描述映射（全局常量）
+const LEVEL_DESCRIPTIONS = {
+    1: '最快速度，压缩率最低',
+    2: '较快速度，较低压缩率',
+    3: '快速压缩',
+    4: '平衡模式',
+    5: '标准压缩',
+    6: '良好压缩',
+    7: '较高压缩率',
+    8: '高压缩率',
+    9: '推荐级别，平衡速度和压缩率',
+    10: '极致压缩，速度最慢'
+};
+
+// 更新压缩级别显示
+function updateLevelDisplay(value) {
+    const level = parseInt(value);
+    levelDisplay.textContent = level === 10 ? '级别 best' : `级别 ${level}`;
+    levelDescription.textContent = LEVEL_DESCRIPTIONS[level] || '';
+}
+
 // 初始化压缩级别滑动条
 function initCompressionLevelSlider() {
-    // 级别描述映射
-    const levelDescriptions = {
-        1: '最快速度，压缩率最低',
-        2: '较快速度，较低压缩率',
-        3: '快速压缩',
-        4: '平衡模式',
-        5: '标准压缩',
-        6: '良好压缩',
-        7: '较高压缩率',
-        8: '高压缩率',
-        9: '推荐级别，平衡速度和压缩率',
-        10: '极致压缩，速度最慢'
-    };
-
-    // 更新显示
-    function updateLevelDisplay(value) {
-        const level = parseInt(value);
-        if (level === 10) {
-            levelDisplay.textContent = '级别 best';
-        } else {
-            levelDisplay.textContent = `级别 ${level}`;
-        }
-        levelDescription.textContent = levelDescriptions[level] || '';
-    }
-
-    // 初始显示
     updateLevelDisplay(compressionLevel.value);
-
-    // 监听滑动条变化
-    compressionLevel.addEventListener('input', (e) => {
-        updateLevelDisplay(e.target.value);
-    });
+    compressionLevel.addEventListener('input', (e) => updateLevelDisplay(e.target.value));
 }
 
 // 获取当前压缩级别值
@@ -587,24 +583,65 @@ async function handleRefreshIcon() {
 function addLog(message, type = 'info', highlight = false) {
     const logLine = document.createElement('div');
     logLine.className = `log-line log-${type} fade-in${highlight ? ' log-highlight' : ''}`;
-    
-    const timestamp = new Date().toLocaleTimeString('zh-CN', { 
+
+    const timestamp = new Date().toLocaleTimeString('zh-CN', {
         hour12: false,
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit'
     });
-    
+
     logLine.textContent = `[${timestamp}] ${message}`;
-    
+
     // 清除初始提示
     if (logOutput.querySelector('.text-gray-500')) {
         logOutput.innerHTML = '';
     }
-    
+
     logOutput.appendChild(logLine);
-    
+
     // 自动滚动到底部
     logOutput.scrollTop = logOutput.scrollHeight;
+}
+
+// 保存当前配置
+async function saveCurrentConfig() {
+    try {
+        const config = {
+            compression_level: parseInt(compressionLevel.value),
+            overwrite: overwriteCheckbox.checked,
+            backup: backupCheckbox.checked,
+            ultra_brute: ultraBruteCheckbox.checked,
+            include_subfolders: includeSubfoldersCheckbox.checked,
+            force_compress: forceCompressCheckbox.checked
+        };
+
+        await invoke('save_config', { config });
+    } catch (error) {
+        console.error('保存配置失败:', error);
+    }
+}
+
+// 加载保存的配置
+async function loadSavedConfig() {
+    try {
+        const config = await invoke('load_config');
+
+        // 应用配置到界面
+        compressionLevel.value = config.compression_level;
+        overwriteCheckbox.checked = config.overwrite;
+        backupCheckbox.checked = config.backup;
+        ultraBruteCheckbox.checked = config.ultra_brute;
+        includeSubfoldersCheckbox.checked = config.include_subfolders;
+        forceCompressCheckbox.checked = config.force_compress;
+
+        // 更新压缩级别显示（复用现有函数）
+        updateLevelDisplay(config.compression_level);
+
+        addLog('已加载上次保存的配置', 'info');
+    } catch (error) {
+        console.error('加载配置失败:', error);
+        addLog('使用默认配置', 'info');
+    }
 }
 
