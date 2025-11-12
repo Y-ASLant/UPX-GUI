@@ -3,6 +3,9 @@ const { open, save } = window.__TAURI__.dialog;
 const { getCurrentWindow } = window.__TAURI__.window;
 const { listen } = window.__TAURI__.event;
 
+// 获取当前窗口实例
+const appWindow = getCurrentWindow();
+
 // DOM 元素
 const compressBtn = document.getElementById('compress-btn');
 const decompressBtn = document.getElementById('decompress-btn');
@@ -45,6 +48,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (error) {
         addLog('UPX GUI 已就绪 - 请选择操作', 'info');
     }
+    
+    // 页面加载完成后显示窗口，避免白屏
+    setTimeout(async () => {
+        await appWindow.show();
+    }, 100);
+    
+    // 监听窗口大小变化，更新按钮位置缓存
+    window.addEventListener('resize', () => {
+        cachedButtonRects = null;  // 清除缓存，下次使用时重新计算
+    });
 });
 
 // 屏蔽刷新快捷键
@@ -69,8 +82,6 @@ function preventRefresh() {
 
 // 窗口控制
 function initWindowControls() {
-    const appWindow = getCurrentWindow();
-
     minimizeBtn.addEventListener('click', () => {
         appWindow.minimize();
     });
@@ -331,23 +342,38 @@ async function setupDragAndDrop() {
     setupVisualFeedback(decompressBtn);
 }
 
+// 缓存按钮位置信息
+let cachedButtonRects = null;
+
+// 更新按钮位置缓存
+function updateButtonRectsCache() {
+    cachedButtonRects = {
+        compress: compressBtn.getBoundingClientRect(),
+        decompress: decompressBtn.getBoundingClientRect()
+    };
+}
+
 // 判断拖放位置对应的目标
 function getDropTarget(position) {
     if (!position) return null;
     
-    const compressRect = compressBtn.getBoundingClientRect();
-    const decompressRect = decompressBtn.getBoundingClientRect();
+    // 如果缓存不存在，创建缓存
+    if (!cachedButtonRects) {
+        updateButtonRectsCache();
+    }
     
     const x = position.x;
     const y = position.y;
     
     // 检查是否在加壳压缩按钮范围内
+    const compressRect = cachedButtonRects.compress;
     if (x >= compressRect.left && x <= compressRect.right &&
         y >= compressRect.top && y <= compressRect.bottom) {
         return 'compress';
     }
     
     // 检查是否在脱壳解压按钮范围内
+    const decompressRect = cachedButtonRects.decompress;
     if (x >= decompressRect.left && x <= decompressRect.right &&
         y >= decompressRect.top && y <= decompressRect.bottom) {
         return 'decompress';
