@@ -79,83 +79,85 @@
 
     <!-- 全局设置弹窗 -->
     <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div class="bg-white shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all" style="border-radius: 0.3rem;">
-            <h2 class="text-xl font-medium text-gray-800 mb-5 pb-3 border-b border-gray-200">全局设置</h2>
+        <div class="bg-white shadow-2xl p-6 w-full mx-4 transform transition-all" style="border-radius: 0.5rem; max-width: 700px;">
+            <h2 class="text-xl font-semibold text-gray-800 mb-5">全局设置</h2>
             
             <div class="space-y-5">
-                <div>
-                    <div class="flex items-center justify-between mb-4">
-                        <label class="text-sm font-medium text-gray-700">压缩级别</label>
-                        <span id="level-display" class="text-base font-semibold text-blue-600">级别 9</span>
+                <!-- 压缩级别 -->
+                <div class="bg-gray-50 p-4 rounded-lg">
+                    <div class="flex items-center justify-between mb-3">
+                        <label class="text-sm font-semibold text-gray-700">压缩级别</label>
+                        <span id="level-display" class="text-base font-bold text-blue-600">级别 9</span>
                     </div>
                     
-                    <div class="relative">
+                    <div class="relative mb-2">
                         <input type="range" id="compression-level" min="1" max="10" value="9" 
                             class="w-full h-2 bg-gray-200 appearance-none cursor-pointer slider" style="border-radius: 0.3rem;">
-                        
-                        <!-- 级别标记 -->
-                        <div class="flex justify-between mt-2 px-1">
-                            <span class="text-xs text-gray-400">1</span>
-                            <span class="text-xs text-gray-400">2</span>
-                            <span class="text-xs text-gray-400">3</span>
-                            <span class="text-xs text-gray-400">4</span>
-                            <span class="text-xs text-gray-400">5</span>
-                            <span class="text-xs text-gray-400">6</span>
-                            <span class="text-xs text-gray-400">7</span>
-                            <span class="text-xs text-gray-400">8</span>
-                            <span class="text-xs text-gray-400">9</span>
-                            <span class="text-xs text-gray-500 font-medium">best</span>
-                        </div>
                     </div>
                     
-                    <p id="level-description" class="mt-2 text-xs text-gray-500 text-center">推荐级别，平衡速度和压缩率</p>
+                    <!-- 级别标记 -->
+                    <div class="flex justify-between px-1 mb-2">
+                        <span class="text-xs text-gray-400">1</span>
+                        <span class="text-xs text-gray-400">2</span>
+                        <span class="text-xs text-gray-400">3</span>
+                        <span class="text-xs text-gray-400">4</span>
+                        <span class="text-xs text-gray-400">5</span>
+                        <span class="text-xs text-gray-400">6</span>
+                        <span class="text-xs text-gray-400">7</span>
+                        <span class="text-xs text-gray-400">8</span>
+                        <span class="text-xs text-gray-400">9</span>
+                        <span class="text-xs text-gray-600 font-semibold">best</span>
+                    </div>
+                    
+                    <p id="level-description" class="text-xs text-gray-500 text-center">推荐级别，平衡速度和压缩率</p>
                 </div>
                 
-                <div class="space-y-2">
-                    <label class="flex items-start space-x-3 cursor-pointer p-2.5 hover:bg-gray-50 transition-colors" style="border-radius: 0.3rem;">
-                        <input type="checkbox" id="overwrite" checked class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        <div class="flex-1">
-                            <span class="text-sm font-medium text-gray-800">覆盖原文件</span>
+                <!-- 选项列表 - 双列布局 -->
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-start space-x-2.5 cursor-pointer p-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all rounded-lg">
+                        <input type="checkbox" id="overwrite" checked class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-semibold text-gray-800 block">覆盖原文件</span>
                             <p class="text-xs text-gray-500 mt-0.5">直接替换原文件，不创建新文件</p>
                         </div>
                     </label>
                     
-                    <label class="flex items-start space-x-3 cursor-pointer p-2.5 hover:bg-gray-50 transition-colors" style="border-radius: 0.3rem;">
-                        <input type="checkbox" id="backup" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        <div class="flex-1">
-                            <span class="text-sm font-medium text-gray-800">备份原文件</span>
+                    <label class="flex items-start space-x-2.5 cursor-pointer p-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all rounded-lg">
+                        <input type="checkbox" id="backup" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-semibold text-gray-800 block">备份原文件</span>
                             <p class="text-xs text-gray-500 mt-0.5">保留 .bak 备份文件</p>
                         </div>
                     </label>
                     
-                    <label class="flex items-start space-x-3 cursor-pointer p-2.5 hover:bg-gray-50 transition-colors" style="border-radius: 0.3rem;">
-                        <input type="checkbox" id="ultra-brute" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        <div class="flex-1">
-                            <span class="text-sm font-medium text-gray-800">极限压缩</span>
+                    <label class="flex items-start space-x-2.5 cursor-pointer p-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all rounded-lg">
+                        <input type="checkbox" id="ultra-brute" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-semibold text-gray-800 block">极限压缩</span>
                             <p class="text-xs text-gray-500 mt-0.5">尝试所有压缩方法，速度较慢但压缩率最高</p>
                         </div>
                     </label>
                     
-                    <label class="flex items-start space-x-3 cursor-pointer p-2.5 hover:bg-gray-50 transition-colors" style="border-radius: 0.3rem;">
-                        <input type="checkbox" id="include-subfolders" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        <div class="flex-1">
-                            <span class="text-sm font-medium text-gray-800">包含子文件夹</span>
+                    <label class="flex items-start space-x-2.5 cursor-pointer p-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all rounded-lg">
+                        <input type="checkbox" id="include-subfolders" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-semibold text-gray-800 block">包含子文件夹</span>
                             <p class="text-xs text-gray-500 mt-0.5">处理文件夹时，递归处理所有子目录</p>
                         </div>
                     </label>
                     
-                    <label class="flex items-start space-x-3 cursor-pointer p-2.5 hover:bg-gray-50 transition-colors" style="border-radius: 0.3rem;">
-                        <input type="checkbox" id="force-compress" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer">
-                        <div class="flex-1">
-                            <span class="text-sm font-medium text-gray-800">强制压缩</span>
+                    <label class="flex items-start space-x-2.5 cursor-pointer p-3 border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all rounded-lg col-span-2">
+                        <input type="checkbox" id="force-compress" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-2 focus:ring-blue-500 cursor-pointer flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <span class="text-sm font-semibold text-gray-800 block">强制压缩</span>
                             <p class="text-xs text-gray-500 mt-0.5">强制处理受保护的文件（如 GUARD_CF），可能移除安全特性</p>
                         </div>
                     </label>
                 </div>
             </div>
 
-            <div class="flex mt-6 pt-4 border-t border-gray-200">
-                <button id="close-settings" class="w-full py-2.5 px-6 bg-blue-500 text-white text-sm font-medium hover:bg-blue-600 transition-colors shadow-sm" style="border-radius: 0.3rem;">
+            <div class="flex mt-6 pt-5 border-t border-gray-200">
+                <button id="close-settings" class="w-full py-2.5 px-6 bg-blue-500 text-white text-sm font-semibold hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-md hover:shadow-lg rounded-lg">
                     保存设置
                 </button>
             </div>
